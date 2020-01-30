@@ -212,6 +212,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
             cursor.moveToFirst();
 
+
+
             while (!cursor.isAfterLast())
             {
                //list.add(cursor.getString(1));
@@ -241,17 +243,31 @@ public class DatabaseHelper extends SQLiteOpenHelper
         return  friends;
     }
 
-    public  boolean addNew(String name,String email,String contact)
+    public  boolean addNew(String id, String name,String email,String contact,int balance,String profile)
     {
         SQLiteDatabase db = this.getWritableDatabase();
 
 // Create a new map of values, where column names are the keys
+        email = "'"+email+"'";
         ContentValues values = new ContentValues();
         Log.d("instered", "sadsadad");
         values.put("Name", name);
         values.put("Email", email);
-        String uuid = UUID.randomUUID().toString();
-        values.put("Id",uuid);
+        if(id == null) {
+            String uuid = UUID.randomUUID().toString();
+
+            values.put("Id", uuid);
+            values.put("Balance", 0);
+            values.put("Profile", "");
+        }
+        else
+        {
+            values.put("Id", id);
+            values.put("Balance", balance);
+            values.put("Profile", profile);
+        }
+
+
         values.put("Contact",contact);
 
         try
@@ -268,7 +284,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     }
 
-    public  boolean addExpense(String id, int amount,String date,String bill,int sync)
+    public  boolean addExpense(String id,String dis,String title,String category, int amount,String date,String bill,int sync)
     {
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -283,6 +299,9 @@ public class DatabaseHelper extends SQLiteOpenHelper
         values.put("date",date);
         values.put("billImage",bill);
         values.put("sync",sync);
+        values.put("category",category);
+        values.put("title",title);
+        values.put("description",dis);
 
 
 
@@ -300,7 +319,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     }
 
-    public  boolean addIndivisual(String id,String his_id, String mem_id,int paid,int borrow,int sync)
+    public  boolean addIndivisual(String id,String his_id, String mem_id,String opp_id, int paid,int borrow,int sync)
     {
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -312,7 +331,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
         values.put("member_id",mem_id);
         values.put("paid",paid);
         values.put("borrow",borrow);
-
+        values.put("opposite_id",opp_id);
         values.put("sync",sync);
 
 
@@ -335,13 +354,19 @@ public class DatabaseHelper extends SQLiteOpenHelper
         SQLiteDatabase db = this.getReadableDatabase();
 
 
-        String query = "Select * FROM partner where Email = "+ "email";
-        Cursor cursor = db.rawQuery(query, null);
+        String query = "Select * FROM partner";
 
+        Cursor cursor = db.rawQuery(query, null);
+cursor.moveToFirst();
         //db.close();
-        if(cursor.getCount() > 0)
-            return true;
-        else
+        while (!cursor.isAfterLast())
+        {
+            if((cursor.getString(3).equals(email)))
+                return true;
+            cursor.moveToNext();
+        }
+
+
             return false;
 
     }
