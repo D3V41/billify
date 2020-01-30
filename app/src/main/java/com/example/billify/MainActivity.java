@@ -167,6 +167,7 @@ public class MainActivity extends AppCompatActivity
 
                             GoogleSignInClient googleSignInClient=GoogleSignIn.getClient(MainActivity.this,gso);
                             googleSignInClient.signOut();
+                          //  startActivity(new Intent(MainActivity.this,ChooseLoginSignupActivity.class));
                         }
                         else
                         {
@@ -254,23 +255,14 @@ public class MainActivity extends AppCompatActivity
             auth = FirebaseAuth.getInstance();
             FirebaseUser currentUser = auth.getCurrentUser();
 
+
             if(currentUser !=null)
             {
-                DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Users").child(currentUser.getUid());
 
-                reference.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        firebaseusername[0] = dataSnapshot.child("Username").getValue().toString();
-                        tx.setText(firebaseusername[0]);
 
-                    }
+                        tx.setText(currentUser.getEmail());
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
 
 
                 mitem.setTitle("Logout");
