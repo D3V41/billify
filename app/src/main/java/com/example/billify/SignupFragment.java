@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -45,9 +46,12 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 
+import static com.facebook.internal.FeatureManager.Feature.Places;
+
 public class SignupFragment extends Fragment implements View.OnClickListener {
 
     private static final int RC_SIGN_IN = 1001;
+    private int id=1;
 
 
     private EditText inputUserName,inputPhone,inputEmail,inputPassword;
@@ -143,14 +147,7 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
 
-        googleApiClient=new GoogleApiClient.Builder(getActivity())
-                .enableAutoManage(getActivity(),1, (GoogleApiClient.OnConnectionFailedListener) getActivity())
-                .addApi(Auth.GOOGLE_SIGN_IN_API,gso)
-                .build();
 
         btnGoogleSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -216,8 +213,8 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
                 final String phone = inputPhone.getText().toString().trim();
 
 
-                if(TextUtils.isEmpty(email)){
-                    Toast.makeText(getActivity(),"Enter email address!!",Toast.LENGTH_SHORT).show();
+                if(TextUtils.isEmpty(email) && TextUtils.isEmpty(phone)){
+                    Toast.makeText(getActivity(),"Enter email address!! or Phone is empty!!",Toast.LENGTH_SHORT).show();
                 }
 
                 if(TextUtils.isEmpty(password)){
@@ -228,9 +225,7 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
                     Toast.makeText(getActivity(),"Username is empty!!",Toast.LENGTH_SHORT).show();
                 }
 
-                if(TextUtils.isEmpty(phone)){
-                    Toast.makeText(getActivity(),"Phone is empty!!",Toast.LENGTH_SHORT).show();
-                }
+
 
                 if(password.length()<6){
                     Toast.makeText(getActivity(),"Password is short",Toast.LENGTH_SHORT).show();
@@ -240,43 +235,67 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
                     Toast.makeText(getActivity(),"Phone number is short",Toast.LENGTH_SHORT).show();
                 }
 
-                progressBar.setVisibility(View.VISIBLE);
 
-                auth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        Toast.makeText(getActivity(),"createuseremailcomplete"+task.isSuccessful(),Toast.LENGTH_SHORT).show();
-                        progressBar.setVisibility(View.GONE);
+                if((phone.length()==10 && !TextUtils.isEmpty(email)) || !TextUtils.isEmpty(email)) {
+                    auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Toast.makeText(getActivity(), "createuseremailcomplete" + task.isSuccessful(), Toast.LENGTH_SHORT).show();
 
-                        if(!task.isSuccessful()){
+                            if (!task.isSuccessful()) {
 
-                            Toast.makeText(getActivity(),"AuthFailed"+task.getException(),Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(), "AuthFailed" + task.getException(), Toast.LENGTH_SHORT).show();
+                            } else {
+                                FirebaseUser currentperson = FirebaseAuth.getInstance().getCurrentUser();
+
+                                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Users").child(currentperson.getUid());
+
+                                ref.child("Username").setValue(username);
+
+                                ref.child("Phone").setValue(phone);
+
+                                ref.child("Email").setValue(email);
+
+                                ref.child("Password").setValue(password);
+
+
+                                sendVerificationEmail();
+                            }
                         }
+                    });
+                }
 
-                        else{
-                            FirebaseUser currentperson = FirebaseAuth.getInstance().getCurrentUser();
+                if((phone.length()==10 && TextUtils.isEmpty(email)))
+                {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("phone",phone);
+                    bundle.putString("username",username);
+                    bundle.putString("password",password);
 
-                            DatabaseReference ref= FirebaseDatabase.getInstance().getReference().child("Users").child(currentperson.getUid());
+                    VerifyPhoneFragment nextFragment = new VerifyPhoneFragment();
+                    nextFragment.setArguments(bundle);
 
-                            ref.child("Username").setValue(username);
-
-                            ref.child("Phone").setValue(phone);
-
-                            ref.child("Email").setValue(email);
-
-                            ref.child("Password").setValue(password);
+                    FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                    fragmentManager.beginTransaction().replace(R.id.fragmentContainer, nextFragment).commit();
 
 
-                            sendVerificationEmail();
-                        }
-                    }
-                });
+
+                }
 
                 break;
 
         }
 
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (googleApiClient != null)
+            googleApiClient.connect();
+    }
+
+
     private void sendVerificationEmail()
     {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -341,6 +360,8 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
         startActivity(intent);
     }
 
+
+
     @Override
     public void onStop() {
         super.onStop();
@@ -349,6 +370,8 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
             googleApiClient.disconnect();
         }
     }
+
+
 
 
 

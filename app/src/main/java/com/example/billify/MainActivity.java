@@ -167,7 +167,6 @@ public class MainActivity extends AppCompatActivity
 
                             GoogleSignInClient googleSignInClient=GoogleSignIn.getClient(MainActivity.this,gso);
                             googleSignInClient.signOut();
-                          //  startActivity(new Intent(MainActivity.this,ChooseLoginSignupActivity.class));
                         }
                         else
                         {
