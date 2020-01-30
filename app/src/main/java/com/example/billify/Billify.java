@@ -10,7 +10,15 @@ public class Billify extends Application
     MyAdapter adpt;
     ContactAdapter cadpt;
     ArrayList<Friend> selected;
+    Friend you;
 
+    public Friend getYou() {
+        return you;
+    }
+
+    public void setYou(Friend you) {
+        this.you = you;
+    }
 
     public String getFb_flag() {
         return fb_flag;
