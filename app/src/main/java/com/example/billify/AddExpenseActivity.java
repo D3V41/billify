@@ -16,13 +16,18 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.util.Log;
+import android.util.Size;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -41,6 +46,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,7 +76,12 @@ public class AddExpenseActivity extends AppCompatActivity
     DatabaseHelper db;
     private static Calendar calender;
     FloatingActionButton bill_image;
-
+    int uneqflag=0;
+    HashMap<String,Integer> paid_hash;
+    HashMap<String,Integer> boorow_hash;
+    int sz;
+    int[] split_arr;
+    int[] paid_arr;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -95,6 +107,9 @@ public class AddExpenseActivity extends AppCompatActivity
         add_exp=(Button)findViewById(R.id.add_exp);
 
 
+        paid_hash = new HashMap<String, Integer>();
+        boorow_hash = new HashMap<String, Integer>();
+        sz= par_friends.size();
         participate.setText("");
         bill_image=(FloatingActionButton)findViewById(R.id.bill_image);
         ln_image=(ImageView)findViewById(R.id.ln_image);
@@ -104,6 +119,46 @@ public class AddExpenseActivity extends AppCompatActivity
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        par_friends.add(bf.getYou());
+
+        split.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position == 2)
+                {
+
+                    split_arr = popup();
+
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent)
+            {
+
+            }
+        });
+
+
+        billed_by.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position == 2)
+                {
+
+
+                    paid_arr =  popup();
+
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
 
 
@@ -134,6 +189,7 @@ public class AddExpenseActivity extends AppCompatActivity
                                 par_friends.addAll(bf.getSelected());
                                 for(int i=0;i<bf.getSelected().size();i++)
                                 {
+
                                     participate.setText(participate.getText() + ", " + bf.getSelected().get(i).getName());
                                 }
                                 bf.setSelected(null);
@@ -155,27 +211,122 @@ public class AddExpenseActivity extends AppCompatActivity
                 String tt = String.valueOf(title.getText());
                 String categ = category.getSelectedItem().toString();
                 String dis = String.valueOf(discription.getText());
+
                 String amo = String.valueOf(amount.getText());
                 String by = billed_by.getSelectedItem().toString();
                 int total = Integer.parseInt(amo);
-                int devide= total / (par_friends.size()+1);
+                int devide=0;
                 String uuid = UUID.randomUUID().toString();
                 String uuid1;
                 SimpleDateFormat currentDate = new SimpleDateFormat("dd/MM/yyyy");
                 Date todayDate = new Date();
                 String thisDate = currentDate.format(todayDate);
-                if(db.addExpense(uuid,total,thisDate,image,0))
-                {
-                    Toast.makeText(AddExpenseActivity.this,"Successfully inserted",Toast.LENGTH_LONG).show();
-                    for(int j=0;j<par_friends.size();j++)
-                    {
-                        uuid1 = UUID.randomUUID().toString();
-                        Friend gh=par_friends.get(j);
-                        if(db.addIndivisual(uuid1,uuid,gh.getId(),0,devide,0))
-                            continue;
-                    }
 
+                int size_jk = par_friends.size();
+
+                if(billed_by.getSelectedItemPosition() == 1)
+                {
+                    paid_arr = new int[size_jk];
+                    paid_arr[0] = Integer.parseInt(amo);
+                    for(int i=1;i<size_jk;i++)
+                    {
+                        paid_arr[i]=0;
+                    }
                 }
+
+
+                if(split.getSelectedItemPosition() == 1)
+                {
+                   split_arr = new int[size_jk];
+                    devide = Integer.parseInt(amo)/size_jk;
+                    for(int i=0;i<size_jk;i++)
+                    {
+                        split_arr[i]=devide;
+                    }
+                }
+
+                if(implementHashing(split_arr,paid_arr,size_jk))
+                {
+                    if(db.addExpense(uuid,dis,tt,categ,total,thisDate,image,0))
+                    {
+                        Toast.makeText(AddExpenseActivity.this,"Successfully inserted",Toast.LENGTH_LONG).show();
+                       /* Iterator myVeryOwnIterator = meMap.keySet().iterator();
+                        while(myVeryOwnIterator.hasNext()) {
+                            String key=(String)myVeryOwnIterator.next();
+                            String value=(String)meMap.get(key);
+                            Toast.makeText(ctx, "Key: "+key+" Value: "+value, Toast.LENGTH_LONG).show();
+                        }*/
+                        Iterator myVeryOwnIterator = paid_hash.keySet().iterator();
+                        Iterator borro_itr = boorow_hash.keySet().iterator();
+
+                        String key=(String)myVeryOwnIterator.next();
+                        int value=(int)paid_hash.get(key);
+
+                       String key1 =(String)borro_itr.next();
+                       int value1=(int)boorow_hash.get(key1);
+                        int net=0;
+                        while(true)
+                        {
+
+
+
+                            uuid1 = UUID.randomUUID().toString();
+                            net = value - value1;
+
+                            Log.d("hasing", "Key: "+value+" Value: "+value1);
+                            if(net < 0)
+                            {
+                                db.addIndivisual(uuid1,uuid,key,key1,value,value1,0);
+                            }
+                            else
+                            {
+                                db.addIndivisual(uuid1,uuid,key,key1,value1,value1,0);
+                            }
+
+
+                            if(net < 0 )
+                            {
+                                value1 = value1 -value;
+                                paid_hash.put(key1,value1);
+                            }
+                            else if(borro_itr.hasNext())
+                            {
+                               key1 =(String)borro_itr.next();
+                               Log.d("dsd",key1);
+                               value1=(int)boorow_hash.get(key1);
+                            }
+                            else
+                            {
+                                key1="";
+                                value1=0;
+                            }
+
+
+
+                            if(net > 0 && value1 != 0)
+                            {
+                                value = net;
+                                paid_hash.put(key,net);
+                            }
+                            else if(myVeryOwnIterator.hasNext())
+                            {
+                                key =(String)myVeryOwnIterator.next();
+                                Log.d("dsd",key);
+                                value=(int)paid_hash.get(key);
+
+                            }
+                            else
+                                break;
+                        //  ;
+
+                            Log.d("hasing12", "Key: "+value+" Value: "+value1);
+                           // Toast.makeText(this, "Key: "+key+" Value: "+value, Toast.LENGTH_LONG).show();
+                        }
+
+                    }
+                }
+
+
 
 
             }
@@ -246,7 +397,7 @@ public class AddExpenseActivity extends AppCompatActivity
                                                            if(dataSnapshot.getValue() == null)
                                                            {
                                                                //send request for add new friend on server
-                                                               if(db.addNew(nm,em,""))
+                                                               if(db.addNew(null,nm,em,"",0,""))
                                                                {
                                                                    Toast.makeText(AddExpenseActivity.this,"Success",Toast.LENGTH_LONG).show();
                                                                }
@@ -298,7 +449,7 @@ public class AddExpenseActivity extends AppCompatActivity
 
                                                     if(dataSnapshot.getValue() == null)
                                                     {
-                                                        if(db.addNew(nm,"",cn))
+                                                        if(db.addNew(null,nm,"",cn,0,""))
                                                         {
                                                             Toast.makeText(AddExpenseActivity.this,"Success contact",Toast.LENGTH_LONG).show();
                                                         }
@@ -368,6 +519,111 @@ public class AddExpenseActivity extends AppCompatActivity
 
     }
 
+    private boolean implementHashing(int[] split_arr, int[] paid_arr,int size)
+    {
+        for(int i=0;i<size;i++)
+        {
+            int net = paid_arr[i] - split_arr[i];
+
+            if(net > 0)
+            {
+                paid_hash.put(par_friends.get(i).getId(),net);
+                Log.d(net+" hj"+i,par_friends.get(i).getId()+"fgdg"+paid_hash.get(par_friends.get(i).getId())+"");
+            }
+            else {
+                net=   split_arr[i] - paid_arr[i];
+                boorow_hash.put(par_friends.get(i).getId(), net);
+                Log.d(net+" hj12"+i,"hhjf "+par_friends.get(i).getId()+" jk" +boorow_hash.get(par_friends.get(i).getId())+"");
+            }
+
+
+
+
+        }
+
+
+        return true;
+
+        /**/
+    }
+
+    public int[] popup()
+    {
+
+        sz = par_friends.size();
+        final int[] arr = new int[sz];
+        LayoutInflater inflater = getLayoutInflater();
+        final View alertLayout = inflater.inflate(R.layout.unequall, null);
+
+        final LinearLayout myRoot = (LinearLayout)alertLayout.findViewById(R.id.uneq);
+
+        myRoot.removeAllViews();
+        TextView[] tx = new TextView[sz];
+        final EditText[] ex = new EditText[sz];
+        final int count=0;
+        for(int i=0;i<sz;i++)
+        {
+            LinearLayout ln = new LinearLayout(AddExpenseActivity.this);
+            ln.setGravity(Gravity.CENTER);
+            ln.setOrientation(LinearLayout.HORIZONTAL);
+            ln.setId(i);
+
+            tx[i] = new TextView(AddExpenseActivity.this);
+            ex[i] = new EditText(AddExpenseActivity.this);
+
+
+
+            ex[i].setId(i);
+            tx[i].setId(i);
+
+            tx[i].setText(par_friends.get(i).getName());
+
+            ln.addView(tx[i]);
+            ln.addView(ex[i]);
+            myRoot.addView(ln);
+
+
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(AddExpenseActivity.this)
+
+                .setView(alertLayout)
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+
+
+                        int sum=0;
+                        for(int i=0;i<sz;i++)
+                        {
+                            int c = Integer.parseInt(String.valueOf(ex[i].getText()));
+                            arr[i] =c;
+                            sum =sum+c;
+                            //Log.d("msg",arr[i]+"");
+                        }
+                        if(sum != Integer.parseInt(String.valueOf(amount.getText())))
+                        {
+                            uneqflag=1;
+                            Toast.makeText(getApplicationContext(), "Provide valid value", Toast.LENGTH_LONG).show();
+                        }
+
+
+
+
+
+                    }
+                }).setNegativeButton("cancle",null).create();
+
+        dialog.show();
+
+
+
+
+        return arr;
+
+    }
 
 
 
@@ -507,47 +763,7 @@ public class AddExpenseActivity extends AppCompatActivity
 
 
 
-    public void UploadData()
-    {
+    public void UploadData() {
 
-        /*u_bDate = bDate.getText().toString();
-        u_name = name.getText().toString();
-        Pattern p = Pattern.compile("^([0-2][0-9]|(3)[0-1]|[0-9])(\\/)(((0)[0-9])|((1)[0-2]|[0-9]))(\\/)\\d{4}$");
-
-        Matcher m = p.matcher(u_bDate);
-        u_contact = contact.getText().toString();
-        u_email = email.getText().toString();
-        DatabaseHelper db = new DatabaseHelper(this);
-        if(name.getText().length() == 0)
-            Toast.makeText(this,"Please enter name",Toast.LENGTH_LONG).show();
-
-        else if(bDate.getText().length() == 0)
-            Toast.makeText(this,"Please select the birthdate ",Toast.LENGTH_LONG).show();
-
-        else if(!m.find())
-        {
-            Toast.makeText(this,"Date should be in form of dd/mm/yyyy only",Toast.LENGTH_LONG).show();
-        }
-        else if(user == null)
-        {
-            //Toast.makeText(this," "+type,Toast.LENGTH_LONG).show();
-            if(db.insertData(u_name,u_email,u_contact,profile_img,u_bDate,"",type))
-            {
-                bd.setFlag(1);
-                finish();
-            }
-            else
-                Toast.makeText(this,"Unsuccess"+u_bDate+u_contact,Toast.LENGTH_LONG).show();
-        }
-        else
-        {
-            if(db.updateData(u_name,u_email,u_contact,profile_img,u_bDate,user.getId(),type))
-            {
-                bd.setFlag(1);
-                finish();
-            }
-            else
-                Toast.makeText(this,"Unsuccess"+u_bDate+u_contact,Toast.LENGTH_LONG).show();
-        }*/
     }
 }
