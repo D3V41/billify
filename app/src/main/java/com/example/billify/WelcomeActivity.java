@@ -36,7 +36,7 @@ public class WelcomeActivity extends AppCompatActivity
        splash = findViewById(R.id.imageView);
         animation = AnimationUtils.loadAnimation(this,R.anim.splash_animation);
 
-       splash.setAnimation(animation);
+//       splash.setAnimation(animation);
 
         timer = new Timer();
         timer.schedule(new TimerTask()

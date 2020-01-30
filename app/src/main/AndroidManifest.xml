@@ -35,14 +35,16 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.billify.MainActivity" />
-        <activity android:name="com.example.billify.WelcomeActivity">
+        <activity android:name="com.example.billify.MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.SEARCH" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name="com.example.billify.WelcomeActivity">
+
         </activity>
     </application>
 

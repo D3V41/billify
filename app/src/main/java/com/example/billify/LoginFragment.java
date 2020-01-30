@@ -128,14 +128,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         setListeners();
 
-        gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        googleApiClient=new GoogleApiClient.Builder(getActivity())
-                .enableAutoManage(getActivity(),0, (GoogleApiClient.OnConnectionFailedListener) getActivity())
-                .addApi(Auth.GOOGLE_SIGN_IN_API,gso)
-                .build();
 
         btnGoogleSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -317,7 +309,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                             }
                                             else
                                                 {
-                                                if(hp.addNew(user.getUid(), nm, em, cn, Integer.parseInt(bl), pr))
+                                               // if(hp.addNew(user.getUid(), nm, em, cn, Integer.parseInt(bl), pr))
                                                 Toast.makeText(getApplicationContext(), "added profile" , Toast.LENGTH_LONG).show();
                                             }
 

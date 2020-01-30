@@ -259,8 +259,19 @@ public class MainActivity extends AppCompatActivity
             if(currentUser !=null)
             {
 
+                DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users").child(currentUser.getUid());
+                reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        tx.setText(dataSnapshot.child("Username").getValue().toString());
 
-                        tx.setText(currentUser.getEmail());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
 
 
 

@@ -17,4 +17,10 @@
     <color name="btn_login_bg">#eceef1</color>
     <color name="lbl_name">#333333</color>
     <color name="btn_logut_bg">#ff6861</color>
+    <color name="red" >#ff0000</color>
+    <color name="black">#000000</color>
+    <color name="blue">#100D49</color>
+    <color name="gradiantstart">#E2570A64</color>
+    <color name="toolbartext">#40FBC6</color>
+
 </resources>

@@ -42,6 +42,8 @@ public class ResetPasswordFragment extends Fragment {
 
         auth = FirebaseAuth.getInstance();
 
+
+
         btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)

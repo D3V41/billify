@@ -9,7 +9,6 @@
     android:layout_height="match_parent">
 
 
-
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawerLayout"
         android:layout_width="match_parent"
@@ -32,8 +31,9 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:id="@+id/shitstuff"
-
-            app:itemTextColor="@color/colorPrimary"
+            android:background="@drawable/gradiant1"
+            app:itemIconTint="@color/white"
+            app:itemTextColor="@color/white"
             app:menu="@menu/menu"
 
             />

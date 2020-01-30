@@ -21,8 +21,11 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="-222dp">
+        android:layout_marginBottom="-120dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="-16dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/relativeLayout2"
@@ -31,13 +34,12 @@
 
             android:layout_gravity="center">
 
-
             <ImageView
                 android:id="@+id/logo"
                 android:layout_width="219dp"
                 android:layout_height="144dp"
 
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="230dp"
                 android:scaleType="centerCrop"
                 android:src="@mipmap/logo"
 
@@ -47,12 +49,37 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
+                android:id="@+id/password"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
+                android:layout_marginBottom="25dp"
+                android:background="@drawable/et_ui"
+                android:focusableInTouchMode="true"
+                android:hint="@string/hint_password"
+                android:imeActionId="123"
+                android:imeOptions="actionUnspecified"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:paddingLeft="25dp"
+                android:paddingTop="15dp"
+                android:paddingBottom="15dp"
+                android:singleLine="true"
+                android:textColorHint="@android:color/white"
+                app:layout_constraintBottom_toTopOf="@+id/sign_up_button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:targetApi="o" />
+
+            <EditText
                 android:id="@+id/username"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
+                android:layout_marginStart="60dp"
                 android:layout_marginTop="250dp"
-                android:layout_marginEnd="25dp"
+                android:layout_marginEnd="60dp"
                 android:layout_marginBottom="20dp"
                 android:autofillHints=""
 
@@ -76,8 +103,8 @@
                 android:id="@+id/phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
-                android:layout_marginEnd="25dp"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
                 android:layout_marginBottom="20dp"
                 android:autofillHints=""
                 android:background="@drawable/et_ui"
@@ -100,8 +127,8 @@
                 android:id="@+id/email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
-                android:layout_marginEnd="25dp"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
                 android:layout_marginBottom="20dp"
                 android:autofillHints=""
                 android:background="@drawable/et_ui"
@@ -119,31 +146,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 tools:targetApi="o" />
 
-            <EditText
-                android:id="@+id/password"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
-                android:layout_marginEnd="25dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/et_ui"
-                android:focusableInTouchMode="true"
-                android:hint="@string/hint_password"
-                android:imeActionId="123"
-                android:imeOptions="actionUnspecified"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:paddingLeft="25dp"
-                android:paddingTop="15dp"
-                android:paddingBottom="15dp"
-                android:singleLine="true"
-                android:textColorHint="@android:color/white"
-                app:layout_constraintBottom_toTopOf="@+id/sign_up_button"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toStartOf="parent"
-                tools:targetApi="o" />
-
             <Button
                 android:id="@+id/sign_up_button"
                 android:layout_width="wrap_content"
@@ -152,29 +154,30 @@
                 android:background="@drawable/bg_button_white"
                 android:text="@string/action_sign_in_short"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
 
+                android:textColor="@color/white"
                 android:textSize="20dp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toTopOf="@+id/sign_in_button"
+                app:layout_constraintBottom_toTopOf="@+id/btn_reset_password"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.526"
+                app:layout_constraintHorizontal_bias="0.534"
                 app:layout_constraintStart_toStartOf="parent" />
 
-<!--            <Button-->
-<!--                android:id="@+id/btn_reset_password"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:background="@null"-->
-<!--                android:paddingLeft="7dp"-->
-<!--                android:paddingRight="7dp"-->
-<!--                android:text="@string/btn_forgot_password"-->
-<!--                android:textAllCaps="false"-->
-<!--                android:textColor="@android:color/white"-->
-<!--                app:layout_constraintBottom_toTopOf="@+id/sign_in_button"-->
-<!--                app:layout_constraintEnd_toEndOf="parent"-->
-<!--                app:layout_constraintHorizontal_bias="0.549"-->
-<!--                app:layout_constraintStart_toStartOf="parent" />-->
+            <Button
+                android:id="@+id/btn_reset_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@null"
+                android:paddingLeft="7dp"
+                android:paddingRight="7dp"
+                android:text="@string/btn_forgot_password"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                app:layout_constraintBottom_toTopOf="@+id/sign_in_button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.549"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <Button
                 android:id="@+id/sign_in_button"
@@ -261,10 +264,37 @@
                 android:orientation="vertical"
                 app:layout_constraintGuide_percent="0.5" />
 
+            <!--            <com.facebook.login.widget.LoginButton-->
+            <!--                android:id="@+id/login_button"-->
+            <!--                android:layout_width="wrap_content"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_gravity="center_horizontal"-->
+            <!--                app:layout_constraintBottom_toBottomOf="@+id/sign_in_button"-->
+            <!--                app:layout_constraintEnd_toEndOf="parent"-->
+            <!--                app:layout_constraintHorizontal_bias="0.562"-->
+            <!--                app:layout_constraintStart_toStartOf="parent" />-->
+
+
+            <!--<ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="0dp"
+                android:layout_height="11dp"
+                android:padding="7dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />-->
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
-
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center|bottom"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone"
+        tools:ignore="MissingConstraints" />
 </androidx.constraintlayout.widget.ConstraintLayout>
-

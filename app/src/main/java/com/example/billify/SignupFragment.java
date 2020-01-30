@@ -102,19 +102,12 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
 
 
         btnSignUp.setOnClickListener(this);
-        btnResetPassword.setOnClickListener(this);
+       // btnResetPassword.setOnClickListener(this);
         btnSignIn.setOnClickListener(this);
 
 
 
-        gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
 
-        googleApiClient=new GoogleApiClient.Builder(getActivity())
-                .enableAutoManage(getActivity(),1, (GoogleApiClient.OnConnectionFailedListener) getActivity())
-                .addApi(Auth.GOOGLE_SIGN_IN_API,gso)
-                .build();
 
         btnGoogleSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,14 +135,14 @@ public class SignupFragment extends Fragment implements View.OnClickListener {
                                 "Login_Fragment").commit();
                 break;
 
-            case R.id.btn_reset_password:
+           /* case R.id.btn_reset_password:
 
                 fragmentManager
                         .beginTransaction()
                         .replace(R.id.fragmentContainer,
                                 new ResetPasswordFragment(),
                                 "ForgotPassword_Fragment").commit();
-                break;
+                break;*/
             case R.id.sign_up_button:
 
                 checkValidation();
