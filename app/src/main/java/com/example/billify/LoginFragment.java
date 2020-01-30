@@ -1,12 +1,19 @@
-    package com.example.billify;
+package com.example.billify;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,12 +21,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -44,14 +53,19 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
 
@@ -71,10 +85,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     private static FragmentManager fragmentManager;
     private AccessToken accessToken;
     private GoogleApiClient googleApiClient;
-
+    private DatabaseReference databaseReference;
     private GoogleSignInOptions gso;
     private FirebaseAuth.AuthStateListener mAuthListener;
-
+    Billify bf;
+    ProgressDialog progressDialog;
+    Friend f;
     public LoginFragment(){
 
     }
@@ -84,84 +100,33 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.activity_login,container,false);
 
+
         auth = FirebaseAuth.getInstance();
 
-
+        bf = (Billify) getApplicationContext();
 
         inputEmail = (EditText) view.findViewById(R.id.email);
         inputPassword = (EditText) view.findViewById(R.id.password);
-        progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
+
         btnLogin = (Button) view.findViewById(R.id.sign_in_button);
         btnSignup = (Button) view.findViewById(R.id.sign_up_button);
         btnReset = (Button) view.findViewById(R.id.btn_reset_password);
 
-
+        databaseReference= FirebaseDatabase.getInstance().getReference("Users");
         fragmentManager =getActivity().getSupportFragmentManager();
+
+        progressDialog = new ProgressDialog(getActivity());
 
         btnFacebook = (LoginButton) view.findViewById(R.id.login_button);
         btnGoogleSignIn = (SignInButton) view.findViewById(R.id.google_button);
 
 
 
+
         callbackManager = CallbackManager.Factory.create();
         btnFacebook.setPermissions(Arrays.asList("email", "public_profile"));
 
-
-        btnSignup.setOnClickListener(this);
-        btnReset.setOnClickListener(this);
-        btnLogin.setOnClickListener(this);
-
-        btnFacebook.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-
-                GraphRequest.newMeRequest(
-                        loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject me, GraphResponse response) {
-                                if (response.getError() != null) {
-
-                                } else {
-                                    String email = response.getJSONObject().optString("email");
-                                    String id = me.optString("id");
-                                    String name = me.optString("name");
-
-
-                                    new MainActivity().fname=name;
-                                    //FirebaseUser currentperson = FirebaseAuth.getInstance().getCurrentUser();
-
-                                    DatabaseReference ref= FirebaseDatabase.getInstance().getReference().child("Users").child(id);
-
-                                    ref.child("Email").setValue(email);
-
-                                    ref.child("Name").setValue(name);
-
-
-                                    startActivity(new Intent(getActivity(),MainActivity.class));
-                                }
-                            }
-                        }).executeAsync();
-
-            }
-
-            @Override
-            public void onCancel() {
-
-            }
-
-            @Override
-            public void onError(FacebookException exception) {
-
-            }
-        });
-
-
-
-        //new MainActivity().fname=name;
-
-        //new MainActivity().tx.setText(me.optString("name"));
-
-
+        setListeners();
 
         gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -185,29 +150,52 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         accessToken = AccessToken.getCurrentAccessToken();
 
-        if(accessToken != null)
-        {
-            startActivity(new Intent(getActivity(),MainActivity.class));
-        }
-        else if(account!=null){
-            startActivity(new Intent(getActivity(),MainActivity.class));
-        }
-        else
-        {
-            auth = FirebaseAuth.getInstance();
-            FirebaseUser currentUser = auth.getCurrentUser();
-
-            if(currentUser !=null)
-            {
-                startActivity(new Intent(getActivity(),MainActivity.class));
-
-            }
-        }
-
-
-
-        return view;
+             return view;
     }
+
+
+    private void setListeners()
+    {
+        btnLogin.setOnClickListener(this);
+        btnReset.setOnClickListener(this);
+        btnSignup.setOnClickListener(this);
+
+        // Set check listener over checkbox for showing and hiding password
+        /*show_hide_password
+                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+                    @Override
+                    public void onCheckedChanged(CompoundButton button,
+                                                 boolean isChecked) {
+
+                        // If it is checkec then show password else hide
+                        // password
+                        if (isChecked) {
+
+                            show_hide_password.setText("Hide password");// change
+                            // checkbox
+                            // text
+
+                            password.setInputType(InputType.TYPE_CLASS_TEXT);
+                            password.setTransformationMethod(HideReturnsTransformationMethod
+                                    .getInstance());// show password
+                        } else {
+                            show_hide_password.setText("Show Password");// change
+                            // checkbox
+                            // text
+
+                            inputPassword.setInputType(InputType.TYPE_CLASS_TEXT
+                                    | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                            inputPassword.setTransformationMethod(PasswordTransformationMethod
+                                    .getInstance());// hide password
+
+                        }
+
+                    }
+                });*/
+    }
+
+
 
 
     @Override
@@ -240,55 +228,153 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     }
 
-    private void checkValidation(){
-        String email = inputEmail.getText().toString().trim();
-        final String password = inputPassword.getText().toString().trim();
+    private void checkValidation() {
+        // Get email id and password
+        ConnectivityManager conMgr = (ConnectivityManager)getActivity().getSystemService (Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = conMgr.getActiveNetworkInfo();
 
-        if (TextUtils.isEmpty(email)) {
-            Toast.makeText(getApplicationContext(), "Enter email", Toast.LENGTH_SHORT).show();
-            return;
+        String getEmailId = inputEmail.getText().toString();
+        String getPassword = inputPassword.getText().toString();
+
+        // Check patter for email id
+        Pattern p = Pattern.compile("[a-zA-Z0-9._-]+@[a" +
+                "-z]+\\.+[a-z]+");
+
+        Matcher m = p.matcher(getEmailId);
+
+        // Check for both field is empty or not
+        if (getEmailId.equals("") || getEmailId.length() == 0
+                || getPassword.equals("") || getPassword.length() == 0) {
+//            loginLayout.startAnimation(shakeAnimation);
+            Toast.makeText(getActivity(), "Enter both credentials.", Toast.LENGTH_SHORT)
+                    .show();
+
         }
+        // Check if email id is valid or not
+        else if (!m.find())
+            Toast.makeText(getActivity(), "Email id is invalid", Toast.LENGTH_SHORT)
+                    .show();
+            // Else do login and do your stuff
+        else if (conMgr == null || activeNetworkInfo == null)
+        {
 
-        if (TextUtils.isEmpty(password)) {
-            Toast.makeText(getActivity(), "Enter the password", Toast.LENGTH_SHORT).show();
-            return;
+
+
+            AlertDialog dialog = new AlertDialog.Builder(getActivity())
+
+                    .setMessage("Please check your connections")
+                    .create();
+            dialog.show();
+
         }
+        else
+        {
 
 
-        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener((Activity) getActivity(), new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (!task.isSuccessful()) {
-                    if (password.length() < 6) {
-                        inputPassword.setError(getString(R.string.minimum_password));
-                    } else {
-                        Toast.makeText(getActivity(), getString(R.string.auth_failed), Toast.LENGTH_SHORT).show();
-                    }
-                }
-                else {
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            progressDialog = new ProgressDialog(getActivity());
+            progressDialog.setMax(100);
+            progressDialog.setMessage("Its loading....");
+            progressDialog.setTitle("Please wait");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
 
-                    if (user.isEmailVerified()) {
 
-                        FirebaseUser currentperson = FirebaseAuth.getInstance().getCurrentUser();
+            auth.signInWithEmailAndPassword(getEmailId,getPassword)
+                    .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>()
+                    {
 
-                        DatabaseReference ref= FirebaseDatabase.getInstance().getReference().child("Users").child(currentperson.getUid());
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task)
+                        {
+                            if(task.isSuccessful())
+                            {
 
-                        ref.child("Password").setValue(password);
+                                final FirebaseUser user = auth.getCurrentUser();
+                                //Toast.makeText(getApplicationContext(), "Provide +"+user.getUid() , Toast.LENGTH_LONG).show();
+                                if(user.isEmailVerified())
+                                {
+                                    databaseReference.child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot)
+                                        {
 
-                        Toast.makeText(getActivity(), "Successfully login", Toast.LENGTH_SHORT).show();
+                                            String nm = (String) dataSnapshot.child("Name").getValue();
+                                            String pr = (String) dataSnapshot.child("Profile").getValue();
+                                            String em = (String) dataSnapshot.child("Email").getValue();
+                                            String cn = (String) dataSnapshot.child("Contact").getValue();
+                                            String bl =  (String) dataSnapshot.child("Balance").getValue();
 
-                        startActivity(new Intent(getActivity(),MainActivity.class));
 
-                    } else {
-                        Toast.makeText(getActivity(), "Not verified", Toast.LENGTH_SHORT).show();
 
-                        FirebaseAuth.getInstance().signOut();
-                    }
-                }
-            }
-        });
+                                            DatabaseHelper hp =new DatabaseHelper(getActivity());
+                                            if(hp.findByEmail(em))
+                                            {
+                                                Toast.makeText(getApplicationContext(), "email exist" , Toast.LENGTH_LONG).show();
+                                            }
+                                            else if(hp.findByContact(cn))
+                                            {
+                                                Toast.makeText(getApplicationContext(), "contact exist" , Toast.LENGTH_LONG).show();
+                                            }
+                                            else
+                                                {
+                                                if(hp.addNew(user.getUid(), nm, em, cn, Integer.parseInt(bl), pr))
+                                                Toast.makeText(getApplicationContext(), "added profile" , Toast.LENGTH_LONG).show();
+                                            }
 
+                                            getActivity().finish();
+
+
+                                        }
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError)
+                                        {
+
+
+                                        }
+                                    });
+
+
+                                    //getActivity().finish();
+                                }
+                                else
+                                {
+                                    AlertDialog dialog = new AlertDialog.Builder(getActivity())
+
+                                            .setMessage("Please verify your email")
+                                            .create();
+                                    dialog.show();
+                                }
+                                progressDialog.dismiss();
+
+
+
+                            }
+                            else
+                            {
+                                progressDialog.dismiss();
+
+                                AlertDialog dialog = new AlertDialog.Builder(getActivity())
+
+                                        .setMessage("You have been not registered yet")
+                                        .create();
+                                dialog.show();
+                            }
+
+
+
+
+
+                        }
+
+
+
+                    });
+
+
+
+
+
+        }
 
     }
 
@@ -313,9 +399,24 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
 
-            ref.child("Email").setValue(userEmail);
+            f = new Friend();
 
+            f = new Friend();
+            f.setName(userName);
+            f.setEmail(userEmail);
+            f.setContact("");
+            f.setProfile("");
+            f.setBalance(0);
+            f.setId(userId);
+
+            bf.setYou(f);
+
+            ref.child("Email").setValue(userEmail);
+            ref.child("Contact").setValue("");
+            ref.child("Balance").setValue("");
+            ref.child("Profile").setValue("");
             ref.child("Name").setValue(userName);
+
             Toast.makeText(getActivity(),"sign in successfull",Toast.LENGTH_SHORT).show();
         }
 
@@ -329,17 +430,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     private void gotoMainActivity(){
-        Intent intent=new Intent(getActivity(),MainActivity.class);
-        startActivity(intent);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (googleApiClient != null && googleApiClient.isConnected()) {
-            googleApiClient.stopAutoManage(getActivity());
-            googleApiClient.disconnect();
-        }
+       getActivity().finish();
     }
 
 }
