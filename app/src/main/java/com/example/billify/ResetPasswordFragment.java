@@ -1,6 +1,9 @@
 package com.example.billify;
 
-import android.content.Intent;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -13,20 +16,21 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ResetPasswordFragment extends Fragment {
     private EditText inputEmail;
     private Button btnReset, btnBack;
     private FirebaseAuth auth;
-    private ProgressBar progressBar;
-    private static FragmentManager fragmentManager;
-
+    private ProgressDialog progressDialog;
 
     @Nullable
     @Override
@@ -36,49 +40,87 @@ public class ResetPasswordFragment extends Fragment {
         btnReset = (Button) view.findViewById(R.id.btn_reset_password);
         btnBack = (Button) view.findViewById(R.id.btn_back);
 
-        fragmentManager =getActivity().getSupportFragmentManager();
-
-
         auth = FirebaseAuth.getInstance();
-
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fragmentManager
-                        .beginTransaction()
-                        .replace(R.id.fragmentContainer,
-                                new LoginFragment(),
-                                "Login_Fragment").commit();            }
-        });
 
         btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)
+            {
 
-                String email = inputEmail.getText().toString().trim();
+                String getEmailId = inputEmail.getText().toString().trim();
 
-                if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(getActivity(), "Enter your registered email id", Toast.LENGTH_SHORT).show();
-                    return;
+                ConnectivityManager conMgr = (ConnectivityManager)getActivity().getSystemService (Context.CONNECTIVITY_SERVICE);
+
+                NetworkInfo activeNetworkInfo = conMgr.getActiveNetworkInfo();
+                // Pattern for email id validation
+                Pattern p = Pattern.compile("[a-zA-Z0-9._-]+@[a" +
+                        "-z]+\\.+[a-z]+");
+                // Match the pattern
+                Matcher m = p.matcher(getEmailId);
+
+                // First check if email id is not null else show error toast
+                if (getEmailId.equals("") || getEmailId.length() == 0)
+
+
+                    Toast.makeText(getActivity(), "Please enter your Email Id.",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Check if email id is valid or not
+                else if (!m.find())
+                    Toast.makeText(getActivity(), "Your Email Id is invalid",
+                            Toast.LENGTH_SHORT).show();
+
+                else if (conMgr == null || activeNetworkInfo == null)
+                {
+
+
+
+                    AlertDialog dialog = new AlertDialog.Builder(getActivity())
+
+                            .setMessage("Please check your connections")
+                            .create();
+                    dialog.show();
+
+                }
+                // Else submit email id and fetch passwod or do your stuff
+                else
+                {
+                    progressDialog=new ProgressDialog(getActivity());
+                    progressDialog.setMax(100);
+                    progressDialog.setMessage("Its loading....");
+                    progressDialog.setTitle("Please wait.");
+                    progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                    progressDialog.show();
+
+                    auth.sendPasswordResetEmail(getEmailId).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful())
+                            {
+                                progressDialog.dismiss();
+                                AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                                        .setTitle("Reset Password")
+                                        .setMessage("Password reset link hass been sent to your email.")
+                                        .create();
+                                dialog.show();
+                                //Toast.makeText(getActivity(), "Password reset link hass been sent to your email.",
+                                //Toast.LENGTH_SHORT).show();
+
+                                getActivity().finish();
+                            }
+                            else {
+                                AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                                        .setTitle("Incorrect Password")
+                                        .setMessage("Password, that you have entered is not registered.")
+                                        .create();
+                                dialog.show();
+
+                                progressDialog.dismiss();
+                            }
+                        }
+                    });
                 }
 
-                auth.sendPasswordResetEmail(email)
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (task.isSuccessful()) {
-                                    Toast.makeText(getActivity(), "We have sent you instructions to reset your password!", Toast.LENGTH_SHORT).show();
-                                    fragmentManager
-                                            .beginTransaction()
-                                            .replace(R.id.fragmentContainer,
-                                                    new LoginFragment(),
-                                                    "Login_Fragment").commit();
-                                } else {
-                                    Toast.makeText(getActivity(), "Failed to send reset email!", Toast.LENGTH_SHORT).show();
-                                }
-
-                            }
-                        });
             }
         });
 
