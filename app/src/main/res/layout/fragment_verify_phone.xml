@@ -42,4 +42,15 @@
         android:textAllCaps="false"
         android:textColor="#cdd8f1" />
 
+    <Button
+        android:id="@+id/resendOtp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editTextCode"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="90dp"
+        android:background="@color/colorPrimaryDark"
+        android:text="Resend Otp"
+        android:textAllCaps="false"
+        android:textColor="#cdd8f1" />
 </RelativeLayout>

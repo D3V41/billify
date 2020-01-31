@@ -76,14 +76,7 @@ public class ChooseLoginSignupActivity extends AppCompatActivity  implements Goo
 
         fragmentTransaction.replace(R.id.fragmentContainer, new LoginFragment()).commit();
 
-        gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
 
-        googleApiClient=new GoogleApiClient.Builder(this)
-                .enableAutoManage(this,6, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API,gso)
-                .build();
 
 
     }

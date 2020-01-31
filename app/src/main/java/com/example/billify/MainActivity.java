@@ -263,7 +263,7 @@ public class MainActivity extends AppCompatActivity
                 reference.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        tx.setText(dataSnapshot.child("Username").getValue().toString());
+                        tx.setText(dataSnapshot.child("Name").getValue().toString());
 
                     }
 

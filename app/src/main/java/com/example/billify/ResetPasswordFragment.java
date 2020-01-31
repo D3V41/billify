@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -100,24 +101,21 @@ public class ResetPasswordFragment extends Fragment {
                             if(task.isSuccessful())
                             {
                                 progressDialog.dismiss();
-                                AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                                        .setTitle("Reset Password")
-                                        .setMessage("Password reset link hass been sent to your email.")
-                                        .create();
-                                dialog.show();
-                                //Toast.makeText(getActivity(), "Password reset link hass been sent to your email.",
-                                //Toast.LENGTH_SHORT).show();
+
+                                Toast.makeText(getActivity(),"Reset password link sent to your email..",Toast.LENGTH_LONG).show();
+
 
                                 getActivity().finish();
                             }
                             else {
+                                progressDialog.dismiss();
+
                                 AlertDialog dialog = new AlertDialog.Builder(getActivity())
                                         .setTitle("Incorrect Password")
                                         .setMessage("Password, that you have entered is not registered.")
                                         .create();
                                 dialog.show();
 
-                                progressDialog.dismiss();
                             }
                         }
                     });

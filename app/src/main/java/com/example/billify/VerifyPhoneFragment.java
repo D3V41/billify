@@ -3,6 +3,7 @@ package com.example.billify;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskExecutors;
@@ -43,13 +47,17 @@ public class VerifyPhoneFragment extends Fragment {
 
     private EditText editTextCode;
 
-    private Button signin;
+    private Button signin,resend;
 
     private FirebaseAuth mAuth;
 
     private static FragmentManager fragmentManager;
 
     private String phone,username,password,email;
+    private GoogleSignInOptions gso;
+    private GoogleApiClient googleApiClient;
+    PhoneAuthProvider.ForceResendingToken mResendToken;
+
 
 
     @Nullable
@@ -64,9 +72,18 @@ public class VerifyPhoneFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         editTextCode = view.findViewById(R.id.editTextCode);
 
+        gso =  new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        googleApiClient=new GoogleApiClient.Builder(getActivity())
+                .enableAutoManage(getActivity(),2, (GoogleApiClient.OnConnectionFailedListener) getActivity())
+                .addApi(Auth.GOOGLE_SIGN_IN_API,gso)
+                .build();
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        phone = this.getArguments().getString("phone");
+        phone = this.getArguments().getString("phone").trim();
 
         username = this.getArguments().getString("username");
 
@@ -90,6 +107,14 @@ public class VerifyPhoneFragment extends Fragment {
 
                 //verifying the code entered manually
                 verifyVerificationCode(code);
+            }
+        });
+
+        view.findViewById(R.id.resendOtp).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resendVerificationCode(phone, mResendToken);
+
             }
         });
 
@@ -120,22 +145,40 @@ public class VerifyPhoneFragment extends Fragment {
 
         @Override
         public void onVerificationFailed(@NonNull FirebaseException e) {
-            Toast.makeText(getActivity(), phone, Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
 
         }
 
         @Override
         public void onCodeSent(String s, PhoneAuthProvider.ForceResendingToken forceResendingToken) {
             super.onCodeSent(s, forceResendingToken);
-
+            mResendToken = forceResendingToken;
             mVerificationId = s;
         }
 
     };
 
     private void verifyVerificationCode(String code) {
-        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(mVerificationId, code);
-        signInWithPhoneAuthCredential(credential);
+        try {
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(mVerificationId, code);
+            signInWithPhoneAuthCredential(credential);
+        }catch (Exception e){
+            Toast toast = Toast.makeText(getActivity(), "Verification Code is wrong", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER,0,0);
+            toast.show();
+        }
+
+    }
+
+    private void resendVerificationCode(String phoneNumber,
+                                        PhoneAuthProvider.ForceResendingToken token) {
+        PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                phoneNumber,        // Phone number to verify
+                60,                 // Timeout duration
+                TimeUnit.SECONDS,   // Unit of timeout
+                getActivity(),               // Activity (for callback binding)
+                mCallbacks,         // OnVerificationStateChangedCallbacks
+                token);             // ForceResendingToken from callbacks
     }
 
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
@@ -144,11 +187,12 @@ public class VerifyPhoneFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+
                             FirebaseUser currentperson = FirebaseAuth.getInstance().getCurrentUser();
 
                             DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Users").child(currentperson.getUid());
 
-                            ref.child("Username").setValue(username);
+                            ref.child("Name").setValue(username);
 
                             ref.child("Phone").setValue(phone);
 
@@ -174,6 +218,15 @@ public class VerifyPhoneFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (googleApiClient != null && googleApiClient.isConnected()) {
+            googleApiClient.stopAutoManage(getActivity());
+            googleApiClient.disconnect();
+        }
     }
 
 
